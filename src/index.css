@@ -1,0 +1,109 @@
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  @apply bg-amyris-black text-amyris-cream font-sans;
+  overflow-x: hidden;
+}
+
+.split-hidden {
+  visibility: hidden;
+}
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.text-glow {
+  text-shadow: 0 0 40px rgba(201, 162, 75, 0.35), 0 0 80px rgba(201, 162, 75, 0.15);
+}
+
+/* Outlined "ghost" text for large background numerals */
+.text-outline {
+  -webkit-text-stroke: 1px rgba(201, 162, 75, 0.25);
+  color: transparent;
+}
+
+/* Ambient floating embers */
+@keyframes float-up {
+  0% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(var(--drift, 20px)) scale(0.4);
+    opacity: 0;
+  }
+}
+
+.ember {
+  position: absolute;
+  bottom: -5%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(232, 205, 133, 0.9) 0%,
+    rgba(201, 162, 75, 0.4) 60%,
+    transparent 100%
+  );
+  animation: float-up linear infinite;
+  pointer-events: none;
+}
+
+
+/* Slow continuous zoom on media panels — keeps footage feeling alive even mid-scroll-hold */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+.animate-kenburns {
+  animation: ken-burns 16s ease-in-out infinite alternate;
+}
+
+/* Animated underline that draws in from the left on hover */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.link-underline:hover::after {
+  transform: scaleX(1);
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Frame Extractor</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: monospace;
+      padding: 40px;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    #preview {
+      margin-top: 20px;
+      max-width: 400px;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Video Frame Extractor</h1>
+  <p>Select your hero-bg.mp4 file:</p>
+  <input type="file" id="videoInput" accept="video/mp4" />
+  <div id="status">Waiting for video...</div>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="preview" />
+
+  <script>
+    const FPS = 24;
+
+    document.getElementById("videoInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const video = document.createElement("video");
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = "auto";
+      video.src = URL.createObjectURL(file);
+
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const status = document.getElementById("status");
+      const preview = document.getElementById("preview");
+
+      video.addEventListener("loadedmetadata", async () => {
+        const duration = video.duration;
+        const totalFrames = Math.floor(duration * FPS);
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        status.textContent = `Video loaded: ${duration.toFixed(2)}s, extracting ${totalFrames} frames at ${FPS}fps...`;
+
+        const frames = [];
+
+        for (let i = 0; i < totalFrames; i++) {
+          const time = i / FPS;
+
+          await new Promise((resolve) => {
+            video.currentTime = time;
+            video.onseeked = () => {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+              canvas.toBlob(
+                (blob) => {
+                  const frameNum = String(i + 1).padStart(4, "0");
+                  const fileName = `frame_${frameNum}.jpg`;
+
+                  // Trigger download
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = fileName;
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+
+                  frames.push(fileName);
+                  status.textContent = `Extracting frame ${i + 1} / ${totalFrames}...`;
+                  preview.src = canvas.toDataURL("image/jpeg", 0.85);
+
+                  resolve();
+                },
+                "image/jpeg",
+                0.85
+              );
+            };
+          });
+        }
+
+        status.textContent = `Done! ${frames.length} frames extracted. Move them all to public/frames/`;
+      });
+    });
+  </script>
+</body>
+</html>
