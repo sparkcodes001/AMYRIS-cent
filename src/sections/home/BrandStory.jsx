@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger, SplitText } from "../../lib/gsapConfig";
 import { PiArrowRightLight } from "react-icons/pi";
@@ -35,230 +35,273 @@ export default function BrandStory() {
   const quoteMarkRef = useRef(null);
   const ctaWrapRef = useRef(null);
 
-  useGSAP(() => {
-    const splits = chapterRefs.current.map(
-      (el) => new SplitText(el, { type: "chars" }),
-    );
+  const [videoReady, setVideoReady] = useState(false);
 
-    splits.forEach((split) => {
-      gsap.set(split.chars, {
-        opacity: 0,
-        rotateX: -100,
-        scale: 0.7,
-        transformOrigin: "50% 100%",
-      });
-    });
-
-    gsap.set(eyebrowRefs.current, { opacity: 0, y: 16 });
-    gsap.set([...lineLeftRefs.current, ...lineRightRefs.current], {
-      scaleX: 0,
-    });
-    gsap.set(numeralRefs.current, { opacity: 0 });
-    gsap.set(statsRowRef.current, { opacity: 0, y: 30 });
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: pinRef.current,
-        start: "top top",
-        end: "+=280%",
-        scrub: 0.6,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
+  // ─── Lazy-load: don't even mount the video until the user is close ───
+  // Keeps main-thread/decoder load off the browser while the heavy
+  // scroll-scrubbed chapter timeline above is running.
+  useEffect(() => {
+    const el = mediaSectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVideoReady(true);
+          io.disconnect();
+        }
       },
-    });
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
-    const chapterInDuration = 10;
-    const holdDuration = 8;
-    const chapterOutDuration = 6;
-    const gap = 2;
-    let cursor = 0;
+  useGSAP(
+    () => {
+      const splits = chapterRefs.current.map(
+        (el) => new SplitText(el, { type: "chars", charsClass: "story-char" }),
+      );
 
-    splits.forEach((split, i) => {
-      const isLast = i === splits.length - 1;
+      splits.forEach((split) => {
+        gsap.set(split.chars, {
+          opacity: 0,
+          rotateX: -100,
+          scale: 0.7,
+          transformOrigin: "50% 100%",
+        });
+      });
 
-      tl.to(
-        numeralRefs.current[i],
-        { opacity: 1, duration: chapterInDuration },
-        cursor,
-      );
-      tl.to(
-        lineLeftRefs.current[i],
-        { scaleX: 1, duration: chapterInDuration * 0.6, ease: "power2.out" },
-        cursor,
-      );
-      tl.to(
-        lineRightRefs.current[i],
-        { scaleX: 1, duration: chapterInDuration * 0.6, ease: "power2.out" },
-        cursor,
-      );
-      tl.to(
-        eyebrowRefs.current[i],
-        {
-          opacity: 1,
-          y: 0,
-          duration: chapterInDuration * 0.6,
-          ease: "power2.out",
+      gsap.set(eyebrowRefs.current, { opacity: 0, y: 16 });
+      gsap.set([...lineLeftRefs.current, ...lineRightRefs.current], {
+        scaleX: 0,
+      });
+      gsap.set(numeralRefs.current, { opacity: 0 });
+      gsap.set(statsRowRef.current, { opacity: 0, y: 30 });
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: pinRef.current,
+          start: "top top",
+          end: "+=280%",
+          scrub: 0.6,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
         },
-        cursor,
-      );
+      });
 
-      tl.to(
-        split.chars,
-        {
-          opacity: 1,
-          rotateX: 0,
-          scale: 1,
-          stagger: 0.025,
-          duration: chapterInDuration,
-          ease: "back.out(1.6)",
-        },
-        cursor,
-      );
+      const chapterInDuration = 10;
+      const holdDuration = 8;
+      const chapterOutDuration = 6;
+      const gap = 2;
+      let cursor = 0;
 
-      cursor += chapterInDuration + holdDuration;
+      splits.forEach((split, i) => {
+        const isLast = i === splits.length - 1;
 
-      if (!isLast) {
         tl.to(
-          split.chars,
-          {
-            opacity: 0,
-            rotateX: 100,
-            scale: 0.7,
-            filter: "blur(6px)",
-            stagger: 0.015,
-            duration: chapterOutDuration,
-            ease: "power2.in",
-          },
+          numeralRefs.current[i],
+          { opacity: 1, duration: chapterInDuration },
           cursor,
         );
         tl.to(
-          numeralRefs.current[i],
-          { opacity: 0, duration: chapterOutDuration },
+          lineLeftRefs.current[i],
+          { scaleX: 1, duration: chapterInDuration * 0.6, ease: "power2.out" },
+          cursor,
+        );
+        tl.to(
+          lineRightRefs.current[i],
+          { scaleX: 1, duration: chapterInDuration * 0.6, ease: "power2.out" },
           cursor,
         );
         tl.to(
           eyebrowRefs.current[i],
-          { opacity: 0, duration: chapterOutDuration * 0.6 },
-          cursor,
-        );
-
-        cursor += chapterOutDuration - gap;
-      } else {
-        tl.to(
-          split.chars,
           {
-            yPercent: -12,
-            scale: 0.9,
-            duration: chapterOutDuration,
+            opacity: 1,
+            y: 0,
+            duration: chapterInDuration * 0.6,
             ease: "power2.out",
           },
           cursor,
         );
+
         tl.to(
-          numeralRefs.current[i],
-          { opacity: 0.4, duration: chapterOutDuration },
+          split.chars,
+          {
+            opacity: 1,
+            rotateX: 0,
+            scale: 1,
+            stagger: 0.025,
+            duration: chapterInDuration,
+            ease: "back.out(1.6)",
+          },
           cursor,
         );
 
-        cursor += chapterOutDuration;
+        cursor += chapterInDuration + holdDuration;
 
-        tl.to(
-          statsRowRef.current,
-          { opacity: 1, y: 0, duration: 10, ease: "power2.out" },
-          cursor,
-        );
-
-        statValueRefs.current.forEach((el, si) => {
-          const target = { val: 0 };
+        if (!isLast) {
+          // ─── Exit: opacity + rotateX + scale only. No `filter`. ───
+          // Reads just as "flips away," but stays 100% compositor-driven —
+          // this was the single biggest cause of scroll lag.
           tl.to(
-            target,
+            split.chars,
             {
-              val: stats[si].value,
-              duration: 14,
-              ease: "power1.out",
-              onUpdate: () => {
-                el.textContent = Math.round(target.val);
-              },
+              opacity: 0,
+              rotateX: 100,
+              scale: 0.7,
+              stagger: 0.015,
+              duration: chapterOutDuration,
+              ease: "power2.in",
             },
             cursor,
           );
-        });
-      }
-    });
+          tl.to(
+            numeralRefs.current[i],
+            { opacity: 0, duration: chapterOutDuration },
+            cursor,
+          );
+          tl.to(
+            eyebrowRefs.current[i],
+            { opacity: 0, duration: chapterOutDuration * 0.6 },
+            cursor,
+          );
 
-    // ─── Curtain-reveal video + pull quote ───
-    gsap.set(mediaClipRef.current, { clipPath: "inset(0% 0% 100% 0%)" });
-    gsap.set(videoRef.current, { scale: 1.3 });
+          cursor += chapterOutDuration - gap;
+        } else {
+          tl.to(
+            split.chars,
+            {
+              yPercent: -12,
+              scale: 0.9,
+              duration: chapterOutDuration,
+              ease: "power2.out",
+            },
+            cursor,
+          );
+          tl.to(
+            numeralRefs.current[i],
+            { opacity: 0.4, duration: chapterOutDuration },
+            cursor,
+          );
 
-    gsap.to(mediaClipRef.current, {
-      clipPath: "inset(0% 0% 0% 0%)",
-      duration: 1.4,
-      ease: "power4.inOut",
-      scrollTrigger: {
-        trigger: mediaSectionRef.current,
-        start: "top 70%",
-        onEnter: () => {
-          // Ensure playback actually starts once the curtain begins lifting
-          videoRef.current?.play().catch(() => {});
+          cursor += chapterOutDuration;
+
+          tl.to(
+            statsRowRef.current,
+            { opacity: 1, y: 0, duration: 10, ease: "power2.out" },
+            cursor,
+          );
+
+          statValueRefs.current.forEach((el, si) => {
+            const target = { val: 0 };
+            tl.to(
+              target,
+              {
+                val: stats[si].value,
+                duration: 14,
+                ease: "power1.out",
+                onUpdate: () => {
+                  el.textContent = Math.round(target.val);
+                },
+              },
+              cursor,
+            );
+          });
+        }
+      });
+
+      requestAnimationFrame(() => ScrollTrigger.refresh());
+    },
+    { scope: pinRef },
+  );
+
+  // ─── Media section: curtain reveal + pull quote ───
+  useGSAP(
+    () => {
+      gsap.set(mediaClipRef.current, { clipPath: "inset(0% 0% 100% 0%)" });
+
+      gsap.to(mediaClipRef.current, {
+        clipPath: "inset(0% 0% 0% 0%)",
+        duration: 1.4,
+        ease: "power4.inOut",
+        scrollTrigger: {
+          trigger: mediaSectionRef.current,
+          start: "top 70%",
         },
-      },
-    });
+      });
 
-    gsap.to(videoRef.current, {
-      scale: 1,
-      ease: "none",
-      scrollTrigger: {
-        trigger: mediaSectionRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: 0.6,
-      },
-    });
+      const quoteSplit = new SplitText(quoteRef.current, {
+        type: "lines",
+        mask: "lines",
+      });
 
-    const quoteSplit = new SplitText(quoteRef.current, {
-      type: "lines",
-      mask: "lines",
-    });
+      gsap.set(quoteSplit.lines, { yPercent: 110, opacity: 0 });
+      gsap.set(quoteMarkRef.current, { opacity: 0, scale: 0.5, rotate: -15 });
+      gsap.set(ctaWrapRef.current, { opacity: 0, y: 20 });
 
-    gsap.set(quoteSplit.lines, { yPercent: 110, opacity: 0 });
-    gsap.set(quoteMarkRef.current, { opacity: 0, scale: 0.5, rotate: -15 });
-    gsap.set(ctaWrapRef.current, { opacity: 0, y: 20 });
-
-    const quoteTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: quoteRef.current,
-        start: "top 80%",
-      },
-    });
-
-    quoteTl
-      .to(quoteMarkRef.current, {
-        opacity: 1,
-        scale: 1,
-        rotate: 0,
-        duration: 0.8,
-        ease: "back.out(2)",
-      })
-      .to(
-        quoteSplit.lines,
-        {
-          yPercent: 0,
+      gsap
+        .timeline({
+          scrollTrigger: { trigger: quoteRef.current, start: "top 80%" },
+        })
+        .to(quoteMarkRef.current, {
           opacity: 1,
-          stagger: 0.12,
-          duration: 0.9,
-          ease: "power3.out",
-        },
-        "-=0.4",
-      )
-      .to(
-        ctaWrapRef.current,
-        { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" },
-        "-=0.3",
-      );
+          scale: 1,
+          rotate: 0,
+          duration: 0.8,
+          ease: "back.out(2)",
+        })
+        .to(
+          quoteSplit.lines,
+          {
+            yPercent: 0,
+            opacity: 1,
+            stagger: 0.12,
+            duration: 0.9,
+            ease: "power3.out",
+          },
+          "-=0.4",
+        )
+        .to(
+          ctaWrapRef.current,
+          { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" },
+          "-=0.3",
+        );
+    },
+    { scope: mediaSectionRef },
+  );
 
-    requestAnimationFrame(() => ScrollTrigger.refresh());
-  }, {});
+  // ─── Video: only animate/play once mounted, pause when scrolled away ───
+  useGSAP(
+    () => {
+      if (!videoReady || !videoRef.current) return;
+
+      gsap.set(videoRef.current, { scale: 1.3 });
+      gsap.to(videoRef.current, {
+        scale: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: mediaSectionRef.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 0.6,
+        },
+      });
+
+      ScrollTrigger.create({
+        trigger: mediaSectionRef.current,
+        start: "top 90%",
+        end: "bottom 10%",
+        onToggle: (self) => {
+          const v = videoRef.current;
+          if (!v) return;
+          if (self.isActive) v.play().catch(() => {});
+          else v.pause();
+        },
+      });
+    },
+    { scope: mediaSectionRef, dependencies: [videoReady] },
+  );
 
   return (
     <>
@@ -269,7 +312,6 @@ export default function BrandStory() {
         <FloatingParticles count={26} />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(201,162,75,0.08)_0%,transparent_60%)]" />
 
-        {/* Chapters — flex-centered against the FULL screen height, always true dead-center regardless of what else is in this section */}
         <div className="relative z-10 flex h-full w-full items-center justify-center px-6 sm:px-10">
           <div className="relative w-full max-w-5xl">
             {chapters.map((chapter, i) => (
@@ -304,7 +346,7 @@ export default function BrandStory() {
 
                 <h2
                   ref={(el) => (chapterRefs.current[i] = el)}
-                  className="text-glow font-display font-medium text-amyris-cream text-[clamp(1.9rem,7vmin,5.5rem)] leading-[1.1]"
+                  className="text-glow break-normal font-display font-medium text-amyris-cream text-[clamp(1.9rem,7vmin,5.5rem)] leading-[1.1]"
                 >
                   {chapter.title}
                 </h2>
@@ -313,11 +355,6 @@ export default function BrandStory() {
           </div>
         </div>
 
-        {/*
-    Stats — pinned near the bottom edge with a FIXED offset (never %),
-    so it always resolves correctly no matter the parent's box model.
-    Always a tight horizontal row, even on mobile — just scaled down.
-  */}
         <div
           ref={statsRowRef}
           className="absolute inset-x-0 bottom-6 z-10 mx-auto flex w-full max-w-3xl items-start justify-center gap-5 px-6 sm:bottom-10 sm:gap-10 md:bottom-14 md:gap-16"
@@ -343,18 +380,19 @@ export default function BrandStory() {
         <div className="mx-auto max-w-6xl px-6 sm:px-10 md:px-14">
           <div
             ref={mediaClipRef}
-            className="relative aspect-[16/9] w-full overflow-hidden rounded-xl sm:aspect-[21/9]"
+            className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-amyris-black sm:aspect-[21/9]"
           >
-            <video
-              ref={videoRef}
-              src={storyVideo}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              className="h-full w-full object-cover"
-            />
+            {videoReady && (
+              <video
+                ref={videoRef}
+                src={storyVideo}
+                muted
+                loop
+                playsInline
+                preload="auto"
+                className="h-full w-full object-cover"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           </div>
 
@@ -368,7 +406,7 @@ export default function BrandStory() {
 
             <p
               ref={quoteRef}
-              className="font-display text-[clamp(1.5rem,3.2vw,2.5rem)] font-medium italic leading-[1.35] text-amyris-cream"
+              className="break-normal font-display text-[clamp(1.5rem,3.2vw,2.5rem)] font-medium italic leading-[1.35] text-amyris-cream"
             >
               We do not manufacture fragrance. We give light a form worth
               remembering.

@@ -70,9 +70,15 @@ export default function ProductCard({ product, index }) {
           <PiArrowUpRightLight size={18} />
         </span>
 
-        <span className="absolute left-4 top-4 font-sans text-[10px] tracking-[0.3em] text-amyris-cream/40">
-          0{index + 1}
-        </span>
+        {product.isNew ? (
+          <span className="absolute left-4 top-4 rounded-full bg-amyris-gold px-2.5 py-1 font-sans text-[9px] font-medium uppercase tracking-[0.15em] text-amyris-black">
+            New
+          </span>
+        ) : (
+          <span className="absolute left-4 top-4 font-sans text-[10px] tracking-[0.3em] text-amyris-cream/40">
+            0{index + 1}
+          </span>
+        )}
       </div>
 
       <div className="mt-5 flex items-start justify-between">
@@ -83,6 +89,11 @@ export default function ProductCard({ product, index }) {
           <p className="mt-1 font-sans text-xs text-amyris-cream/50">
             {product.notes}
           </p>
+          {product.family && (
+            <p className="mt-1 font-sans text-[10px] uppercase tracking-[0.2em] text-amyris-gold/60">
+              {product.family}
+            </p>
+          )}
         </div>
         <p className="font-serif text-lg italic text-amyris-gold-light">
           ${product.price}

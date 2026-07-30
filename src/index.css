@@ -10,11 +10,32 @@
 
 html {
   scroll-behavior: auto;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #c9a24b #0a0908; /* Firefox: thumb / track */
 }
 
 body {
   @apply bg-amyris-black text-amyris-cream font-sans;
   overflow-x: hidden;
+}
+
+/* WebKit browsers — Chrome, Edge, Safari, most mobile browsers */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0908;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(201, 162, 75, 0.5);
+  border-radius: 9999px;
+  border: 2px solid #0a0908;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(201, 162, 75, 0.85);
 }
 
 .split-hidden {
@@ -106,4 +127,56 @@ body {
 }
 .link-underline:hover::after {
   transform: scaleX(1);
+}
+
+
+/* Hide native scrollbar on the mobile carousel while keeping full native
+   touch/momentum/keyboard scroll behavior intact (unlike overflow:hidden) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Infinite horizontal drift for the fragrance-notes marquee strip */
+@keyframes feature-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-feature-marquee {
+  animation: feature-marquee 26s linear infinite;
+}
+
+/* Global courtesy: stop all continuous decorative loops for users who've
+   explicitly asked their OS to reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns,
+  .animate-feature-marquee,
+  .ember {
+    animation: none !important;
+  }
+}
+
+/* Hints the browser to pre-promote these to their own GPU layer before
+   the animation starts, and fixes a known 3D-rotation flicker in
+   Chrome/Safari on animated text characters. */
+.story-char {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
